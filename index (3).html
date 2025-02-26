@@ -1,0 +1,144 @@
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest Hospital Locator (LocationIQ)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <style>
+        #map { height: 500px; width: 100%; margin-top: 20px; }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #hospital-info {
+            font-size: 16px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #distance-time-info {
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+        }
+        #alert-button {
+            margin-top: 10px;
+            text-align: center;
+        }
+        #alert-button button {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;"> Nearest Hospital</h1>
+    <p id="hospital-info">Finding the nearest hospital...</p>
+    <div id="distance-time-info"></div> <!-- Distance and Time will be displayed here -->
+    <div id="map"></div>
+    <div id="alert-button">
+        <button onclick="alert('Contacting the hospital...')">Red Alert: Contact Hospital</button>
+    </div>
+
+    <!-- Leaflet JS library -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        const map = L.map('map').setView([20.5937, 78.9629], 5);//Create map instance with zoom level 5
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,  //maxzoom level
+            attribution: '&copy; OpenStreetMap contributors' //Open street map to display map
+        }).addTo(map);
+
+        async function findNearestHospital() {
+            if (!navigator.geolocation) {
+                document.getElementById("hospital-info").innerText = "Geolocation is not supported by your browser.";
+                return; //cheack geolocation is supported or not (Allow or deny by user)
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                const apiUrl = `https://us1.locationiq.com/v1/nearby.php?key=pk.4554e7b3a19e48f66c417be267f1aa46&lat=${latitude}&lon=${longitude}&tag=healthcare,hospital&radius=5000&limit=1&format=json`;
+                //get current location of user  and find nearest hospital within 5km radius
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error(`Error fetching hospital data: ${response.statusText}`);
+                    }
+                    const data = await response.json();//send request and wait for response
+
+                    if (data && data.length > 0) {
+                        const hospital = data[0];
+                        const hospitalCoords = [parseFloat(hospital.lat), parseFloat(hospital.lon)];
+                        const hospitalName = hospital.name || "Unnamed Hospital";//if found then extract longitude and latitude and name also
+
+                        // Constructing the address if available
+                        const address = hospital.address || {};
+                        const hospitalAddress = `${address.road || ''}, ${address.city || ''}, ${address.state || ''}, ${address.country || ''}`.replace(/, ,|,,/g, ',').replace(/,\s*$/, '');
+
+                        document.getElementById("hospital-info").innerText = 
+                            `Nearest Hospital: ${hospitalName}, Address: ${hospitalAddress}`;//update webpage withh hospital name and address
+
+                        map.setView([latitude, longitude], 14);
+
+                        L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup("Your Location")
+                            .openPopup();
+
+                        L.marker(hospitalCoords).addTo(map)
+                            .bindPopup(`<b>${hospitalName}</b><br>${hospitalAddress}`)
+                            .openPopup();//popup name of hospital and address also user location
+
+                        const routingControl = L.Routing.control({
+                            waypoints: [
+                                L.latLng(latitude, longitude),
+                                L.latLng(hospitalCoords[0], hospitalCoords[1])
+                            ],
+                            routeWhileDragging: true,
+                        }).addTo(map);//draw route from user location to hospital location
+
+                        // Event listener for route found
+                        routingControl.on('routesfound', function(e) {
+                            const route = e.routes[0];
+                            const distance = (route.summary.totalDistance / 1000).toFixed(2); // Distance in km
+                            const time = (route.summary.totalTime / 60).toFixed(0); // Time in minutes
+
+                            document.getElementById("distance-time-info").innerHTML = 
+                                `Distance: <b>${distance} km</b> | Estimated Time: <b>${time} minutes</b>`;
+                        });
+
+                    } else {
+                        document.getElementById("hospital-info").innerText = "No nearby hospital found within 5km.";
+                        document.getElementById("distance-time-info").innerText = "";
+                    }
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    document.getElementById("hospital-info").innerText = "An error occurred while fetching hospital data.";
+                    document.getElementById("distance-time-info").innerText = ""; //catch error if any
+                }
+            }, (error) => {
+                console.error("Geolocation error:", error);
+                document.getElementById("hospital-info").innerText = "Unable to retrieve your location.";
+                document.getElementById("distance-time-info").innerText = "";//catch error if any
+            });
+        }
+
+        // Automatically find the nearest hospital on page load
+        window.onload = findNearestHospital;
+    </script>
+</body>
+</html>

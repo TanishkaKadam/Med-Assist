@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Diet Plans</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: white;
+            width: 300px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .card h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        .card p {
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            color: white;
+        }
+        .thyroid { background: #8e44ad; }
+        .bp { background: #3498db; }
+        .diabetes { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+    <h2>Health-Specific Diet Plans</h2>
+
+    <div class="container">
+        <div class="card">
+            <h3>Thyroid Diet</h3>
+            <p>A diet rich in selenium, iodine, and zinc to support thyroid function.</p>
+            <a href="diet4.html" class="btn thyroid">View Plan</a>
+        </div>
+
+        <div class="card">
+            <h3>Blood Pressure Diet</h3>
+            <p>Low-sodium meals with heart-healthy ingredients to manage blood pressure.</p>
+            <a href="diet3.html" class="btn bp">View Plan</a>
+        </div>
+
+        <div class="card">
+            <h3>Diabetes Diet</h3>
+            <p>Balanced meals with fiber and healthy carbs to stabilize blood sugar.</p>
+            <a href="diet2.html" class="btn diabetes">View Plan</a>
+        </div>
+    </div>
+
+</body>
+</html>

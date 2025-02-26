@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Navigation with Traffic-Based Rerouting</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map { height: 60vh; width: 100%; }
+        #info { padding: 10px; text-align: center; }
+        #address { font-weight: bold; }
+        #directions { padding: 10px; max-height: 20vh; overflow-y: auto; background: #f8f9fa; }
+        .direction-arrow { width: 20px; height: 20px; vertical-align: middle; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align: center;">Real-Time Navigation with Traffic-Based Rerouting</h2>
+<div id="map"></div>
+<div id="info">Distance: - | ETA: -</div>
+<div id="address"></div>
+<div id="directions"><b>Directions:</b><ul id="directions-list"></ul></div>
+
+<script>
+    const map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 28,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const apiKey = '5b3ce3597851110001cf62484825a065afbf4b7182cf20d423bbe4cc';
+    const hospitalApiKey = 'pk.4554e7b3a19e48f66c417be267f1aa46';
+    let userMarker, hospitalMarker, routeLayer;
+    let userLocation, hospitalCoords, rerouteInterval;
+
+    function startTracking() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(async (position) => {
+                userLocation = [position.coords.latitude, position.coords.longitude];
+                if (!userMarker) {
+                    userMarker = L.marker(userLocation, { title: "Your Location" }).addTo(map).bindPopup("You are here").openPopup();
+                } else {
+                    userMarker.setLatLng(userLocation);
+                }
+                map.setView(userLocation, 16);
+
+                if (!hospitalCoords) {
+                    await fetchNearestHospital(userLocation);
+                } else {
+                    calculateRoute(userLocation, hospitalCoords);
+                }
+            }, (error) => {
+                alert("Geolocation failed: " + error.message);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 5000
+            });
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    async function fetchNearestHospital(userLocation) {
+        const apiUrl = `https://us1.locationiq.com/v1/nearby.php?key=${hospitalApiKey}&lat=${userLocation[0]}&lon=${userLocation[1]}&tag=healthcare,hospital&radius=5000&limit=1&format=json`;
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const hospital = data[0];
+                hospitalCoords = [parseFloat(hospital.lat), parseFloat(hospital.lon)];
+                const hospitalName = hospital.name || "Unnamed Hospital";
+                const address = `${hospital.address.road || ''}, ${hospital.address.city || ''}, ${hospital.address.state || ''}, ${hospital.address.country || ''}`.replace(/, ,|,,/g, ',').replace(/,\s*$/, '');
+
+                if (!hospitalMarker) {
+                    hospitalMarker = L.marker(hospitalCoords, { title: "Nearest Hospital" }).addTo(map).bindPopup(`<b>${hospitalName}</b><br><div id="address">${address}</div>`).openPopup();
+                } else {
+                    hospitalMarker.setLatLng(hospitalCoords);
+                }
+
+                document.getElementById('address').textContent = address;
+
+                calculateRoute(userLocation, hospitalCoords);
+            } else {
+                alert("No nearby hospital found.");
+            }
+        } catch (error) {
+            console.error("Error fetching hospital data:", error);
+        }
+    }
+
+    async function calculateRoute(start, end) {
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}&attributes=area,road_type,traffic`;
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.features) {
+                const route = result.features[0];
+                const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                const distance = (route.properties.segments[0].distance / 1000).toFixed(2); // km
+                const duration = Math.ceil(route.properties.segments[0].duration / 60); // minutes
+                const trafficCondition = route.properties.segments[0].traffic_status; // Traffic info
+
+                document.getElementById('info').textContent = `Distance: ${distance} km | ETA: ${duration} mins | Traffic: ${trafficCondition}`;
+
+                if (trafficCondition === 'congested') {
+                    alert("Heavy traffic detected! Finding a new route...");
+                    findAlternativeRoute(start, end);
+                } else {
+                    if (routeLayer) map.removeLayer(routeLayer);
+                    routeLayer = L.polyline(coordinates, { color: 'blue' }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds());
+                    displayDirections(route.properties.segments[0].steps);
+                }
+            } else {
+                alert("Could not retrieve route information.");
+            }
+        } catch (error) {
+            console.error("Error fetching route data:", error);
+        }
+    }
+
+    async function findAlternativeRoute(start, end) {
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${start[1]},${start[0]}&end=${end[1]},${end[0]}&avoid_features=highways`;
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.features) {
+                const route = result.features[0];
+                const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                const distance = (route.properties.segments[0].distance / 1000).toFixed(2); // km
+                const duration = Math.ceil(route.properties.segments[0].duration / 60); // minutes
+
+                document.getElementById('info').textContent = `Distance: ${distance} km | ETA: ${duration} mins | (Rerouted)`;
+
+                if (routeLayer) map.removeLayer(routeLayer);
+                routeLayer = L.polyline(coordinates, { color: 'orange' }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+                displayDirections(route.properties.segments[0].steps);
+            } else {
+                alert("Could not retrieve an alternative route.");
+            }
+        } catch (error) {
+            console.error("Error fetching alternative route:", error);
+        }
+    }
+
+    function displayDirections(steps) {
+        const directionsList = document.getElementById('directions-list');
+        directionsList.innerHTML = ""; // Clear previous directions
+
+        steps.forEach((step, index) => {
+            const instruction = document.createElement("li");
+            const remainingDistance = (step.distance / 1000).toFixed(2);
+            const arrowIcon = getArrowIcon(step);
+
+            instruction.innerHTML = `${arrowIcon} ${step.instruction} (${remainingDistance} km remaining)`;
+            directionsList.appendChild(instruction);
+
+            const popup = L.popup()
+                .setLatLng([step.start_location[1], step.start_location[0]])
+                .setContent(`${step.instruction} (${remainingDistance} km remaining)`)
+                .openOn(map);
+        });
+    }
+
+    function getArrowIcon(step) {
+        const direction = step.instruction.split(' ')[0].toLowerCase();
+        let icon = '➡️'; // Default arrow
+
+        switch (direction) {
+            case 'head':
+                icon = '➡️';
+                break;
+            case 'turn':
+                if (step.instruction.includes('left')) {
+                    icon = '⬅️';
+                } else if (step.instruction.includes('right')) {
+                    icon = '➡️';
+                }
+                break;
+            default:
+                break;
+        }
+        return `<span class="direction-arrow">${icon}</span>`;
+    }
+
+    startTracking(); // Start tracking the user's location when the page loads
+</script>
+</body>
+</html>

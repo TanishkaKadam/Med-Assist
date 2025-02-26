@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medassist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+        
+    body {
+        background-color: #d9f5ef;
+        color:black;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+    }
+
+    header {
+        background-color: #25afe6;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+        color: #fff;
+    }
+
+    nav {
+        margin-top: 20px;
+    }
+
+    button {
+        background-color: #5ec1e9;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        margin: 10px;
+        font-size: 1.2em;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: #0571a3;
+    }
+
+    section {
+        margin-top: 20px;
+    } 
+
+   
+    .chatbot-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-color: #ff1a75;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 30px;
+        cursor: pointer;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.3s ease;
+    }
+
+    .chatbot-icon:hover {
+        background-color: #1e96c5;
+    }
+
+    /* Chatbot modal styling */
+    .chat-container {
+        width: 350px;
+        height: 500px;
+        border-radius: 15px;
+        background-color: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        transition: all 0.3s ease;
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        display: none;
+    }
+
+    .chat-header {
+        background-color: #4bb1e0;
+        color: white;
+        text-align: center;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .chat-window {
+        padding: 15px;
+        overflow-y: auto;
+        flex: 1;
+        height: 250px;
+        background-color: #ffe6f7;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        box-shadow: inset 0 2px 15px rgba(0, 0, 0, 0.1);
+        font-size: 16px;
+        font-family: 'Verdana', sans-serif;
+    }
+
+    #user-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ff66b2;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        outline: none;
+        color: #333;
+    }
+
+    #send-btn {
+        background-color: #ff66b2;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .suggestions {
+        padding: 10px;
+        background-color: #ffe6f7;
+        border: 2px solid #ff66b2;
+        border-radius: 10px;
+        display: none;
+        margin-top: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .suggestion-item {
+        margin: 8px 0;
+        padding: 5px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+
+    .suggestion-item:hover {
+        background-color: #ffebf2;
+    }
+    .chat{
+        border: red;
+background-color: #FFFFFF;
+height: 60px;
+-moz-border-radius:75px;
+-webkit-border-radius: 75px;
+width: 60px
+    }
+</style> 
+<body>
+    <div class="chatbot-icon" onclick="toggleChatbot()">
+        💬
+    </div>
+
+    <!-- Chatbot Modal -->
+    <div class="chat-container" id="chatbot-modal">
+        <div class="chat-header">MedAssist Chatbot</div>
+        <div class="chat-window" id="chat-window"></div>
+        <input type="text" id="user-input" placeholder="Type a message..." oninput="showSuggestions()">
+        <button id="send-btn">Send</button>
+        <div class="suggestions" id="suggestions"></div>
+    </div>
+    <header>
+        <nav>
+            <img src="logo.jpeg" width="80px" alt="">
+            <div class="logo" style="padding: 10px" >MedAssist</div>
+            <ul class="nav-links">
+                <li><a href="#Home">Home</a></li>
+                <li><a href="appointment.html">Appointment</a></li>
+                <li><a href="#Our services">Our services</a></li>
+                <li><a href="#Blogs">Blogs</a></li>
+                <li><a href="#Feedback ">Feedback</a></li>
+            </ul>
+
+            
+            <div>
+
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+   
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1></h1>
+            <p>Providing world-class healthcare service</p>
+            <button id="learnMoreBtn">Learn More</button>
+        </div>
+    </section>
+    <section id="departments" class="departments">
+        <h2>Our Services</h2>
+        <div class="department-grid">
+            <div class="department-card">
+                <img src="personalize_care.jpeg" alt="Ambulance locator">
+                <h3>Personalized Care</h3>
+                <p>Plan Your Diet and Exercise for Healthy Life
+                </p>
+                <button><a href="personalize.html">Exercise and Diet</a></button>
+               
+              
+            </div>
+            <div class="department-card">
+                <img src="emergency.jpeg" alt="Hospital Locator">
+                <h3>Emergency Services</h3>
+                <p>Find the nearest hospitals instantly for quick medical assistance</p>
+                <button><a href="emergency.html">Explore Emergency Services</a></button>
+
+            
+            </div>
+            </div>
+        </section>
+        <div class="chatbot-icon" id="chatbotIcon">
+            <img class="chat" src="data:image/png;base64,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" alt="Chatbot" >
+        </div>
+        <div class="chatbot-popup" id="chatbotPopup">
+           
+
+            <div class="chatbot-icon" onclick="toggleChatbot()">
+                <div class="chatbot-icon" id="chatbotIcon">
+                    <img class="chat" src="data:image/png;base64,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" alt="Chatbot" >
+                </div>
+            </div>
+        
+            <!-- Chatbot Modal -->
+            <div class="chat-container" id="chatbot-modal">
+                <div class="chat-header">MedAssist Chatbot</div>
+                <div class="chat-window" id="chat-window"></div>
+                <input type="text" id="user-input" placeholder="Type a message..." oninput="showSuggestions()">
+                <button id="send-btn">Send</button>
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+    
+        <!-- JavaScript Integration from chatboot.js with suggestions functionality -->
+        <div class="chatbot-icon" id="chatbotIcon">
+            <img class="chat" src="data:image/png;base64,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" alt="Chatbot" >
+        </div>
+        
+            <!-- Chatbot icon button -->
+            <div class="chatbot-icon" onclick="toggleChatbot()">
+                <div class="chatbot-icon" id="chatbotIcon">
+                    <img class="chat" src="data:image/png;base64,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" alt="Chatbot" >
+                </div>
+            </div>
+        
+            <!-- Chatbot Modal -->
+            <div class="chat-container" id="chatbot-modal">
+                <div class="chat-header">MedAssist Chatbot</div>
+                <div class="chat-window" id="chat-window"></div>
+                <input type="text" id="user-input" placeholder="Type a message..." oninput="showSuggestions()">
+                <button id="send-btn">Send</button>
+                <div class="suggestions" id="suggestions"></div>
+            </div>
+    
+        <!-- JavaScript Integration from chatboot.js with suggestions functionality -->
+        <script>
+            const firstAidDatabase = {
+                "heart attack": "Call emergency services immediately. Chew and swallow an aspirin to thin the blood unless allergic. Keep the person calm and in a comfortable sitting position.",
+    "head injury": "Apply a cold compress to reduce swelling. Ensure the person rests and monitor for dizziness, confusion, or vomiting. Seek medical attention if symptoms worsen.",
+    "burns": "Run cool (not cold) water over the burn area for about 20 minutes. Apply aloe vera gel to soothe the skin. Cover with a sterile, non-stick dressing.",
+    "fracture": "Immobilize the injured area with a splint or by keeping it in a stable position. Apply a cold compress to reduce swelling. Seek medical attention immediately.",
+    "bleeding": "Apply firm pressure with a clean cloth to stop the bleeding. Elevate the injured area above the heart. Once bleeding stops, clean the wound and apply an antibacterial ointment like honey before covering with a sterile bandage.",
+    "dizziness": "Sit or lie down immediately. Drink water to stay hydrated. Ginger tea may help reduce dizziness and nausea.",
+    "choking": "If the person cannot breathe, perform the Heimlich maneuver. Encourage coughing if they can still breathe. Seek medical help immediately.",
+    "allergic reaction": "Take an antihistamine if available. Applying a cold compress can help reduce swelling. Seek medical attention if symptoms worsen or breathing becomes difficult.",
+    "hypothermia": "Move the person to a warm place and remove any wet clothing. Wrap them in blankets and offer warm (not hot) beverages. Avoid direct heat sources like hot water or heating pads.",
+    "heatstroke": "Move the person to a cooler area. Apply cold compresses to the neck, armpits, and groin. Offer water or electrolyte drinks to rehydrate. Avoid giving sugary or caffeinated beverages.",
+    "severe headache": "Rest in a quiet, dark room. Apply a cold compress to the forehead. Peppermint or lavender essential oil may help alleviate headache symptoms.",
+    "nosebleed": "Sit upright and lean slightly forward. Pinch the nostrils together and hold for 5 to 10 minutes. Applying a cold compress to the bridge of the nose can help constrict blood vessels and stop the bleeding.",
+    "diabetic emergency": "For low blood sugar, consume fast-acting carbohydrates like fruit juice or glucose tablets. For high blood sugar, drink water to stay hydrated and seek medical attention promptly.",
+    "asthma attack": "Use a prescribed inhaler immediately. Sit upright and take slow, deep breaths. Drinking caffeinated beverages like coffee or tea may help open airways temporarily.",
+    "severe abdominal pain": "Apply a warm compress or heating pad to the abdomen to relax muscles and alleviate cramps. Ginger or peppermint tea can aid digestion and reduce discomfort. Seek medical attention if pain persists or worsens.",
+    "seizure": "Ensure the person's safety by clearing the area of hard or sharp objects. Place something soft under their head and turn them onto their side. Do not restrain their movements. After the seizure, offer reassurance and a safe space to rest.",
+    "poisoning": "Call emergency services or poison control immediately. Do not induce vomiting unless instructed by a medical professional. If the poison is on the skin, rinse thoroughly with water.",
+    "stroke": "Recognize signs: facial drooping, arm weakness, and speech difficulty. Call emergency services immediately. Keep the person comfortable and monitor their condition until help arrives.",
+    "animal bite": "Wash the wound thoroughly with soap and water. Apply an antibacterial ointment and cover with a clean bandage. Seek medical attention to assess the need for tetanus or rabies vaccinations.",
+    "eye injury": "Rinse the eye with clean water or saline solution. Avoid rubbing the eye. Apply a cold compress to reduce swelling and seek medical attention if vision is affected or pain persists.",
+    "high blood pressure": "Reduce salt intake and stay hydrated. Drink hibiscus or green tea. Practice deep breathing and meditation to lower stress levels. Exercise regularly and maintain a healthy diet.",
+    "asthma": "Use a prescribed inhaler if available. Drink ginger tea or black coffee to help open airways. Practice controlled breathing exercises and avoid known triggers like dust or smoke.",
+    "dengue fever": "Stay hydrated by drinking plenty of fluids like coconut water and herbal teas. Papaya leaf extract may help increase platelet count. Rest and use a cold compress to reduce fever. Seek medical attention if symptoms worsen.",
+    "diabetes": "Maintain a balanced diet with fiber-rich foods like whole grains, vegetables, and lean proteins. Drink cinnamon tea to help regulate blood sugar levels. Exercise regularly and stay hydrated. Monitor blood sugar levels and seek medical advice for long-term management.",
+    "thyroid": "For hypothyroidism, consume iodine-rich foods like seaweed, fish, and dairy. Ashwagandha and selenium-rich foods like Brazil nuts may help regulate thyroid function. For hyperthyroidism, limit iodine intake and consume cruciferous vegetables like broccoli and cabbage. Maintain a balanced diet and manage stress levels through meditation or yoga."
+            };
+    
+            function toggleChatbot() {
+                const chatbotModal = document.getElementById("chatbot-modal");
+                chatbotModal.style.display = chatbotModal.style.display === "none" ? "flex" : "none";
+            }
+    
+            document.getElementById("send-btn").addEventListener("click", () => {
+                const userInput = document.getElementById("user-input").value.trim();
+                const response = getResponse(userInput);
+                document.getElementById("chat-window").innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+                document.getElementById("chat-window").innerHTML += `<p><strong>MedAssist:</strong> ${response}</p>`;
+                document.getElementById("user-input").value = "";
+                document.getElementById("chat-window").scrollTop = document.getElementById("chat-window").scrollHeight;
+                document.getElementById("suggestions").style.display = "none";
+            });
+    
+            function showSuggestions() {
+                const userInput = document.getElementById("user-input").value.trim().toLowerCase();
+                const suggestionsBox = document.getElementById("suggestions");
+                suggestionsBox.innerHTML = '';
+    
+                if (userInput.length > 0) {
+                    let suggestions = [];
+                    for (const condition in firstAidDatabase) {
+                        if (condition.includes(userInput)) {
+                            suggestions.push(condition);
+                        }
+                    }
+                    if (suggestions.length > 0) {
+                        suggestions.forEach(suggestion => {
+                            const suggestionElement = document.createElement("div");
+                            suggestionElement.classList.add("suggestion-item");
+                            suggestionElement.innerText = suggestion;
+                            suggestionElement.onclick = () => {
+                                document.getElementById("user-input").value = suggestion;
+                                suggestionsBox.style.display = 'none';
+                            };
+                            suggestionsBox.appendChild(suggestionElement);
+                        });
+                        suggestionsBox.style.display = 'block';
+                    } else {
+                        suggestionsBox.style.display = 'none';
+                    }
+                } else {
+                    suggestionsBox.style.display = 'none';
+                }
+            }
+    
+            function getResponse(userInput) {
+                userInput = userInput.toLowerCase();
+                for (const condition in firstAidDatabase) {
+                    if (userInput.includes(condition)) {
+                        return firstAidDatabase[condition];
+                    }
+                }
+                return "Sorry, I'm not sure about that. Please provide more information.";
+            }
+    
+            function openWindow(page) {
+                window.open(page, '_blank', 'width=1000,height=700');
+            }
+    
+        </script>
+
+    </script>
+</body>
+</html>
+

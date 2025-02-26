@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearest Ambulance Locator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        #map { height: 80vh; width: 100%; }
+        #call-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 10px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        #info {
+            padding: 10px;
+            font-size: 1em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align: center;">Nearest Ambulance</h2>
+<div id="map"></div>
+<div id="info">Distance: - | ETA: -</div>
+<a href="tel:+911234567890" id="call-btn">Call Now</a> <!-- Replace with ambulance contact number -->
+
+<script>
+    // Initialize map
+    const map = L.map('map').setView([0, 0], 14); // Default center; will update to user location
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 28,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let userMarker, ambulanceMarker, routeLayer;
+    const apiKey = '5b3ce3597851110001cf62484825a065afbf4b7182cf20d423bbe4cc';
+
+    // Track user location in real-time
+    function trackUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const userLocation = [position.coords.latitude, position.coords.longitude];
+                    if (!userMarker) {
+                        userMarker = L.marker(userLocation, { title: "Your Location" }).addTo(map).bindPopup("You are here");
+                    } else {
+                        userMarker.setLatLng(userLocation);
+                    }
+                    map.setView(userLocation, 14);
+
+                    // Fetch the nearest ambulance location
+                    fetchNearestAmbulance(userLocation);
+                },
+                (error) => alert("Geolocation failed: " + error.message),
+                { enableHighAccuracy: true }
+            );
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    // Simulate fetching ambulance location from a server
+    async function fetchNearestAmbulance(userLocation) {
+        // Simulated ambulance location near the user
+        const ambulanceLocation = [userLocation[0] + 0.01, userLocation[1] + 0.01];
+
+        // Place or update ambulance marker
+        if (!ambulanceMarker) {
+            ambulanceMarker = L.marker(ambulanceLocation, { title: "Nearest Ambulance" })
+                .addTo(map)
+                .bindPopup("Nearest Ambulance Location")
+                .openPopup();
+        } else {
+            ambulanceMarker.setLatLng(ambulanceLocation);
+        }
+
+        // Calculate route from user to ambulance
+        calculateRoute(userLocation, ambulanceLocation);
+    }
+
+    // Calculate and display route, distance, and estimated time of arrival
+    async function calculateRoute(start, end) {
+        const [startLat, startLng] = start;
+        const [endLat, endLng] = end;
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.features) {
+                const route = result.features[0];
+                const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                const distance = (route.properties.segments[0].distance / 1000).toFixed(2); // km
+                const duration = Math.ceil(route.properties.segments[0].duration / 60); // minutes
+
+                // Display distance and ETA
+                document.getElementById('info').textContent = `Distance: ${distance} km | ETA: ${duration} mins`;
+
+                // Clear previous route and draw new route
+                if (routeLayer) map.removeLayer(routeLayer);
+                routeLayer = L.polyline(coordinates, { color: 'blue' }).addTo(map);
+                map.fitBounds(routeLayer.getBounds());
+            } else {
+                alert("Could not retrieve route information.");
+            }
+        } catch (error) {
+            console.error("Error fetching route data:", error);
+        }
+    }
+
+    trackUserLocation(); // Start tracking the user location when page loads
+</script>
+</body>
+</html>
